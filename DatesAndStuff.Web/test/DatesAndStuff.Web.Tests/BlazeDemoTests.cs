@@ -50,5 +50,41 @@ public class BlazeDemoTests
         });
 
         flightRows.Should().HaveCountGreaterThanOrEqualTo(3);
+
+        const decimal maximumPriceForScreenshot = 400m;
+
+        var hasCheapFlight = flightRows.Any(row =>
+        {
+            var cells = row.FindElements(By.TagName("td"));
+
+            if (cells.Count == 0)
+            {
+                return false;
+            }
+
+            var priceText = cells.Last().Text;
+            var normalizedPriceText = priceText.Replace("$", "").Trim();
+
+            if (!decimal.TryParse(
+                normalizedPriceText,
+                System.Globalization.NumberStyles.Number,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var price))
+            {
+                return false;
+            }
+
+            return price < maximumPriceForScreenshot;
+        });
+
+        if (hasCheapFlight)
+        {
+            var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+            var screenshotPath = Path.Combine(desktopPath, "blazedemo-dublin-cheap-flight.png");
+
+            var screenshot = ((ITakesScreenshot)driver).GetScreenshot();
+            screenshot.SaveAsFile(screenshotPath);
+        }
+
     }
 }
