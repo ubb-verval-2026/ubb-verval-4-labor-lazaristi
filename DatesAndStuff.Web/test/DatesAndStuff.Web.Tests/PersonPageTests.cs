@@ -125,6 +125,39 @@ public class PersonPageTests
         salaryAfterSubmission.Should().BeApproximately(expectedSalary, 0.001);
     }
 
+    [Test]
+    public void Person_SalaryIncreaseBelowMinusTen_ShouldDisplayValidationErrors()
+    {
+        // Arrange
+        driver.Navigate().GoToUrl(BaseURL);
+        driver.FindElement(By.XPath("//*[@data-test='PersonPageNavigation']")).Click();
+
+        var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(5));
+
+        var input = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//*[@data-test='SalaryIncreasePercentageInput']")));
+        input.Click();
+        input.SendKeys(Keys.Control + "a");
+        input.SendKeys("-11");
+
+        // Act
+        var submitButton = wait.Until(ExpectedConditions.ElementToBeClickable(By.XPath("//*[@data-test='SalaryIncreaseSubmitButton']")));
+        submitButton.Click();
+
+        // Assert
+        const string expectedValidationMessage = "The specified percentag should be between -10 and infinity.";
+
+        var validationMessages = wait.Until(_ =>
+        {
+            var elements = driver.FindElements(By.XPath(
+                $"//*[normalize-space(text())='{expectedValidationMessage}']"));
+
+            return elements.Count >= 2 ? elements : null;
+        });
+
+        validationMessages.Should().HaveCountGreaterThanOrEqualTo(2);
+    }
+
+
     private bool IsElementPresent(By by)
     {
         try
